@@ -1,51 +1,40 @@
 services:
-  db:
-    image: mariadb:10.11
-    container_name: bicis_db
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - db_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "healthcheck-sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    mariadb:
+        image: mariadb:latest
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+            MYSQL_DATABASE: ${MYSQL_DATABASE:-dolidb}
+            MYSQL_USER: ${MYSQL_USER:-dolidbuser}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD:-dolidbpass}
 
-  dolibarr:
-    image: tuxgasy/dolibarr:latest
-    container_name: bicis_app
-    restart: always
-    ports:
-      - "8080:80"
-    environment:
-      DOLI_DB_HOST: db
-      DOLI_DB_NAME: ${MYSQL_DATABASE}
-      DOLI_DB_USER: ${MYSQL_USER}
-      DOLI_DB_PASSWORD: ${MYSQL_PASSWORD}
-      DOLI_ADMIN_LOGIN: admin
-      DOLI_ADMIN_PASSWORD: adminpassword
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - dolibarr_docs:/var/www/documents
+        volumes:
+            - /home/dolibarr_mariadb:/var/lib/mysql
 
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: bicis_pma
-    restart: always
-    ports:
-      - "8081:80"
-    environment:
-      PMA_HOST: db
-    depends_on:
-      - db
+    web:
+        # Choose the version of image to install
+        # dolibarr/dolibarr:latest (the latest stable version)
+        # dolibarr/dolibarr:develop
+        # dolibarr/dolibarr:x.y.z
+        image: dolibarr/dolibarr:latest
+        environment:
+            DOLI_INIT_DEMO: ${DOLI_INIT_DEMO:-0}
+            DOLI_DB_HOST: ${DOLI_DB_HOST:-mariadb}
+            DOLI_DB_NAME: ${DOLI_DB_NAME:-dolidb}
+            DOLI_DB_USER: ${DOLI_DB_USER:-dolidbuser}
+            DOLI_DB_PASSWORD: ${DOLI_DB_PASSWORD:-dolidbpass}
+            DOLI_URL_ROOT: "${DOLI_URL_ROOT:-http://0.0.0.0}"
+            DOLI_ADMIN_LOGIN: "${DOLI_ADMIN_LOGIN:-admin}"
+            DOLI_ADMIN_PASSWORD: "${DOLI_ADMIN_PASSWORD:-admin}"
+            DOLI_CRON: ${DOLI_CRON:-0}
+            DOLI_CRON_KEY: ${DOLI_CRON_KEY:-mycronsecurekey}
+            DOLI_COMPANY_NAME: ${DOLI_COMPANY_NAME:-MyBigCompany}
+            WWW_USER_ID: ${WWW_USER_ID:-1000}
+            WWW_GROUP_ID: ${WWW_GROUP_ID:-1000}
 
-volumes:
-  db_data:
-  dolibarr_docs:
+        ports:
+            - "80:80"
+        links:
+            - mariadb
+        volumes:
+            - /home/dolibarr_documents:/var/www/documents
+            - /home/dolibarr_custom:/var/www/html/custom
