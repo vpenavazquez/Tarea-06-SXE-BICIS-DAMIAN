@@ -1,0 +1,51 @@
+services:
+  db:
+    image: mariadb:10.11
+    container_name: bicis_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck-sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  dolibarr:
+    image: tuxgasy/dolibarr:latest
+    container_name: bicis_app
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      DOLI_DB_HOST: db
+      DOLI_DB_NAME: ${MYSQL_DATABASE}
+      DOLI_DB_USER: ${MYSQL_USER}
+      DOLI_DB_PASSWORD: ${MYSQL_PASSWORD}
+      DOLI_ADMIN_LOGIN: admin
+      DOLI_ADMIN_PASSWORD: adminpassword
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - dolibarr_docs:/var/www/documents
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: bicis_pma
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+    depends_on:
+      - db
+
+volumes:
+  db_data:
+  dolibarr_docs:
