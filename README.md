@@ -8,6 +8,8 @@
 
 - Configuracion Dolibarr
 
+-PASO 1
+
 ![img_4.png](Capturas/img_4.png)
 
 Una vez instalado Dolibarr e iniciado sesion para configurarlo vamos a Inicio - Configuracion - Modulos
@@ -38,6 +40,10 @@ Activamos Productos para gestionar el catálogo de recambios y piezas.
 ![img_8.png](Capturas/img_8.png)
 
 Activamos Stocks para el control de existencias en tiempo real
+
+
+- PASO 2
+
 
 
 
